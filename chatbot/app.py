@@ -3,7 +3,6 @@ import os
 import base64
 from io import BytesIO
 from typing import Dict, List, Optional, Any
-import tempfile
 
 # Use relative imports since we're inside the chatbot package
 from chat_manager import ChatManager
@@ -26,16 +25,34 @@ if "anthropic_client" not in st.session_state:
     st.session_state.anthropic_client = AnthropicClient()
 
 # App title and description
-st.title("Claude Chatbot")
-st.subheader("Chat with Anthropic's Claude AI")
+st.title("Chatbot")
+st.subheader("Chat with an AI")
 
 # Sidebar for thread management
 with st.sidebar:
     st.header("Chat Threads")
 
+    # Model selection using the SDK's models.list function
+    try:
+        available_models = st.session_state.anthropic_client.list_models()
+        if not available_models:
+            raise ValueError("Empty models list")
+    except Exception as e:
+        st.error(f"Error fetching models: {e}")
+        available_models = ["claude-3-opus-20240229"]  # fallback default
+
+    selected_model = st.selectbox("Select Anthropic Model", available_models, index=0)
+    st.session_state.anthropic_client.model = selected_model
+
+    # Update the current thread's model if it doesn't match the selection
+    current_thread = st.session_state.chat_manager.get_thread(st.session_state.current_thread_id)
+    if current_thread and current_thread.model != selected_model:
+        current_thread.model = selected_model
+        st.session_state.chat_manager.save_threads()
+
     # Create new thread button
     if st.button("New Chat"):
-        thread = st.session_state.chat_manager.create_thread()
+        thread = st.session_state.chat_manager.create_thread(model=selected_model)
         st.session_state.current_thread_id = thread.thread_id
         st.rerun()
 

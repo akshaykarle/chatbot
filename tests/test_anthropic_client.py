@@ -60,3 +60,21 @@ def test_send_message_with_system_prompt(mock_anthropic_response):
         
         call_args = client.client.messages.create.call_args[1]
         assert call_args["system"] == system_prompt
+
+def test_list_models(monkeypatch):
+    from chatbot.anthropic_client import AnthropicClient
+
+    # Define a simple fake model object with an 'id' attribute
+    class FakeModel:
+        def __init__(self, id):
+            self.id = id
+
+    # Create a fake list_models function for the SDK's models.list
+    def fake_list(limit=1000):
+        return [FakeModel("claude-3"), FakeModel("claude-3-opus-20240229")]
+
+    client = AnthropicClient(api_key="fake_key")
+    monkeypatch.setattr(client.client.models, "list", fake_list)
+    models = client.list_models()
+    assert "claude-3" in models
+    assert "claude-3-opus-20240229" in models

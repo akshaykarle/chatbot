@@ -5,9 +5,10 @@ import os
 from datetime import datetime
 
 class ChatThread:
-    def __init__(self, thread_id: Optional[str] = None, title: Optional[str] = None):
+    def __init__(self, thread_id: Optional[str] = None, title: Optional[str] = None, model: Optional[str] = None):
         self.thread_id = thread_id or str(uuid.uuid4())
         self.title = title or f"New Chat {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+        self.model = model or "claude-3-opus-20240229"
         self.messages: List[Dict[str, Any]] = []
         self.created_at = datetime.now().isoformat()
         self.updated_at = self.created_at
@@ -31,6 +32,7 @@ class ChatThread:
         return {
             "thread_id": self.thread_id,
             "title": self.title,
+            "model": self.model,
             "messages": self.messages,
             "created_at": self.created_at,
             "updated_at": self.updated_at
@@ -39,7 +41,11 @@ class ChatThread:
     @classmethod
     def from_dict(cls, data: Dict) -> 'ChatThread':
         """Create a thread from dictionary"""
-        thread = cls(thread_id=data.get("thread_id"), title=data.get("title"))
+        thread = cls(
+            thread_id=data.get("thread_id"),
+            title=data.get("title"),
+            model=data.get("model")
+        )
         thread.messages = data.get("messages", [])
         thread.created_at = data.get("created_at", thread.created_at)
         thread.updated_at = data.get("updated_at", thread.updated_at)
@@ -52,9 +58,9 @@ class ChatManager:
         self.threads: Dict[str, ChatThread] = {}
         self.load_threads()
 
-    def create_thread(self, title: Optional[str] = None) -> ChatThread:
+    def create_thread(self, title: Optional[str] = None, model: Optional[str] = None) -> ChatThread:
         """Create a new chat thread"""
-        thread = ChatThread(title=title)
+        thread = ChatThread(title=title, model=model)
         self.threads[thread.thread_id] = thread
         self.save_threads()
         return thread

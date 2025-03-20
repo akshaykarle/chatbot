@@ -68,3 +68,11 @@ class AnthropicClient:
 
         response = self.client.messages.create(**kwargs)
         return response
+
+    def list_models(self) -> list:
+        """
+        Fetch a list of available models from Anthropic using the SDK's models.list method.
+        Returns a list of model IDs.
+        """
+        models_page = self.client.models.list(limit=1000)
+        return [model.id for model in models_page]
